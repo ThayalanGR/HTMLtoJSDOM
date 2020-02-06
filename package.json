@@ -1,0 +1,23 @@
+{
+  "name": "HTMLtoJSDOM",
+  "version": "1.0.0",
+  "description": "HTML string to JS DOM syntax converter.",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ThayalanGR/HTMLtoJSDOM.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ThayalanGR/HTMLtoJSDOM/issues"
+  },
+  "homepage": "https://github.com/ThayalanGR/HTMLtoJSDOM#readme",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.3"
+  }
+}
