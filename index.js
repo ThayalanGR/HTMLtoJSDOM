@@ -1,13 +1,7 @@
 const cheerio = require("cheerio");
+const fs = require("fs");
 
-const HTMLString = `<div class="sample" id="sample">
-                        <div class="inner">
-                            <div class="inner-of-inner"></div>
-                        </div>
-                        <div class="inner">
-                            <div class="inner-of-inner"></div>
-                        </div>
-                    </div>`
+let HTMLString = fs.readFileSync("./pastehere.html").toString();
 
 const $ = cheerio.load(HTMLString, {
     normalizeWhitespace: true,
@@ -16,20 +10,57 @@ const $ = cheerio.load(HTMLString, {
 
 const allElements = $("*");
 
-let output = ''
+let nameCache = [];
 
 for (let i = 0; i < allElements.length; i++) {
     let name = allElements[i].name;
-    output += `let ${name}elem${i} = document.createElement("${allElements[0].name}");\n`;
-    setAttributes(`${name}elem${i}`, allElements[i].attribs)
+    let cls = "";
+    if (allElements[i].attribs.class)
+        cls = allElements[i].attribs.class.replace(/[- ]/g, '');
+    nameCache.push(`${cls + name}`)
 }
+
+console.log(nameCache);
+
+let output = '';
+let appendArr = [];
+for (let i = 0; i < allElements.length; i++) {
+    let name = allElements[i].name + i.toString();
+    let cls = "";
+    if (allElements[i].attribs.class)
+        cls = allElements[i].attribs.class.replace(/[- ]/g, '');
+    output += `let ${cls + name}Elem = document.createElement("${allElements[i].name}");\n`;
+    setAttributes(`${cls + name}Elem`, allElements[i].attribs)
+    if (allElements[i].children.length && allElements[i].children[0].type === 'text' && allElements[i].children[0].data.trim() !== "") {
+        if (allElements[i].children[0].data.trim().includes("$")) {
+            output += `${cls + name}Elem.append(document.createTextNode(${allElements[i].children[0].data.replace(/[${}]/g, "")}));\n`
+        } else {
+            output += `${cls + name}Elem.append(document.createTextNode("${allElements[i].children[0].data}"));\n`
+        }
+    }
+
+    if (allElements[i].parent) {
+        let pName = allElements[i].parent.name;
+        let pCls = "";
+        console.log(nameCache.indexOf(cls + pName))
+        if (allElements[i].parent.attribs.class)
+            pCls = allElements[i].parent.attribs.class.replace(/[- ]/g, '');
+        let temp = `${pCls + pName}Elem.append(${cls + name}Elem);\n`;
+        appendArr.unshift(temp)
+    }
+}
+
+appendArr.forEach(item => {
+    output += item;
+})
 
 console.log(output)
 
-
-
 function setAttributes(el, attrs) {
     for (var key in attrs) {
-        output += `${el}.setAttribute("${key}", "${attrs[key]}");\n`
+        if (attrs[key].includes("$"))
+            output += `${el}.setAttribute("${key}", ${attrs[key].replace(/[${}]/gi, "")});\n`
+        else
+            output += `${el}.setAttribute("${key}", "${attrs[key].replace(/[${}]/gi, "")}");\n`
     }
 }
